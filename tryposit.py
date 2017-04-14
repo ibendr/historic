@@ -8,6 +8,11 @@ We'll use n Queens as a simple test problem.
 
 from possibilities import *
 
+waitKbd = 1
+waitKbdCount = 0
+
+class SolutionFound( Exception ):
+    pass
 
 class board:
     def __init__( I , n = 8 ):
@@ -15,6 +20,7 @@ class board:
 	I.rng = rng = range( n )
 	I.history = [ { } ]
 	I.queens = [ possSet ( I.history , rng ) for i in rng ]
+	I.solutions = [ ]
 	# lives list is ( l , i ) l = number of possibilities, i = queen number (NOT queen)
 	# new approach - just set of indices of not yet posited / fixed-and-confirmed
 	I.lives = possSet( I.history , rng )
@@ -47,10 +53,13 @@ class board:
 	if len( I.lives ) == 1:  # and i in I.lives:
 	    # Must be done!
 	    print I.n * "=" + "Solution"
+	    print I
+	    I.solutions.append( tuple ( [ q.val() for q in I.queens ] ) )
+	    raise SolutionFound
 	else: 
 	    if j == -1:
 		# lookup last possibility if not passed as arg
-		j = list( I.queens[ i ] )[ 0 ]
+		j = I.queens[ i ].val( )
 	    print ">%sconfirming queen %d at %d..." % ( I.indent( ) , i , j ) ,
 	    # Rule out horizontal and two diagonals for each other queen
 	    #  Look out for new singletons (forced choices) in process
@@ -76,14 +85,27 @@ class board:
 	# start a new 'chapter' in our history
 	if not j in I.queens[ i ]:
 	    raise KeyError
-	print "]%sTrying queen %d at %d" % ( I.indent( ) , i , j )
+	print "]%sTrying queen %d at %d" % ( I.indent( ) , i , j ) ,
+	global waitKbd , waitKbdCount
+	if waitKbd:
+	    waitKbdCount += 1
+	    if ( waitKbdCount % waitKbd ) == 0:
+		inp = raw_input( )
+		if inp:
+		    n = 0
+		    while inp and inp[ 0 ].isdigit( ):
+			n = 10 * n + int( inp[ 0 ] )
+			inp = inp[ 1: ]
+		    waitKbd = n
 	I.history.append( { } )
 	try:
 	    I.queens[ i ].intersection_update( ( j , ) )
 	    # and then start assigning (restricting) things
 	    I.confirm( i , j )
-	except Contradiction as contr:
-	    print "\n%d:%d failed : %s" % ( i , j , contr )
+	    # For recursion to work, continuation has to be here...
+	    I.explore( )
+	except ( Contradiction , SolutionFound ) as contr:
+	    print "\n%d:%d done : %s" % ( i , j , contr )
 	    # Exhausted branch - undo changes back to this posit
 	    I.backup()
 	    # and THEN eliminate possibility that was tried
@@ -91,23 +113,26 @@ class board:
 	    q.remove( j )
 	    if len( q ) == 1:
 		I.confirm( i )
-	print I
-	print I.sortedLives( )
+	
+    def explore( I ):
+	while len( I.lives ) > 1:
+	    livs = I.sortedLives( )
+	    print I
+	    print livs
+	    ( l , i , js ) = livs[ 0 ]
+	    I.posit( i , js[ 0 ] )
 
+b = board(8)
 #test
 def test1():
-    n = 6
-    s=possSet(None,range(10))
-
-    b = board( n )
-    #b.posit(0,1)
-    #b.posit(2,5)
-    #b.posit(4,2)
-    c = board(8)
-    c.posit(0,1)
-    c.posit(5,5)
-    c.posit(7,0)
-    c.posit(3,2)
+    print "Hit enter to procede with each step,"
+    print "or a number n to switch to n-steps-at-a-time,"
+    print "or 0 for no more prompting"
+    try:
+	b.explore()
+    except ( Contradiction , SolutionFound ) as contr:
+	print "\nAll done : %s" % contr
+    print b.solutions
 
 def inner( x ):
     print x , 1 / x
@@ -123,4 +148,4 @@ def inner( x ):
 def test2():
     inner( 10 )
 
-test2()
+test1()

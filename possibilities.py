@@ -91,6 +91,10 @@ class possSet( set ):
     def clear( I ):
 	# remove all elements - must be contradiction!
 	raise Contradiction( "attempt to call clear() on possibility set" )
+    def val( I ):
+	# shorthand to fetch value when only one remains,
+	# but can also fetch an arbitrary element
+	return tuple( I )[ 0 ]
     def fix( I , x ):
 	# counld skip conditional - but nice for debugginh to raise a different contradiction
 	#  exception - one that probably shouldn't occur
