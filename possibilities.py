@@ -54,7 +54,7 @@ class possSet( set ):
 	I.hist( ).add( x )
 	if not I:
 	    # contradiction when set is empty
-	    raise Contradiction( "last element removed from possibility set" )
+	    raise Contradiction( "last possibility removed - %s" % x )
     def pop( I ):
 	# remove "arbitrary" element - hopefully unused so not fussy re efficiency
 	x = list( I ).pop( )
@@ -72,7 +72,7 @@ class possSet( set ):
 	    I.hist( ).__ior__( J )
 	    if not I:
 		# contradiction when set is empty
-		raise Contradiction( "last %d elements removed from possibility set" % len( J ) )
+		raise Contradiction( "last %d possibilities removed - %s" % ( len( J ) , list( J ) ) )
 	return I
     def intersection_update( I , J ):
 	# remove elements NOT in J, which may be any iterable, with no return value
