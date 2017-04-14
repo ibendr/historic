@@ -1,0 +1,11 @@
+Some simple tools to enable undoable histories in asyntactically unobtrusive way.
+
+(+) in general, a tracked object will add change-events to a history object
+(+) format of these events type- (& implementation-) specifc, class defines
+(+) a function to call to 'undo' the changes
+(+) we subclass various standard types (list , set, dict, ...? ) to provide these functions
+(+) each history chunk is a dictionary, with
+  (-) keys - objects that changed
+  (-) values - objects describing the totality of changes
+    to the changed objects, in a format appropriate to
+    pass to the changed objects undo() or redo() methods

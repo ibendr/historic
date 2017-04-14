@@ -85,11 +85,19 @@ class histSet( set , histObject ):
 @historical
 class histList( list , histObject ):
     # We characterise all changes as slice-based assignments,
+    # of which we keep a list
     # GLITCH: extended slice assignment cannot alter length,
     # BUT del works with them, so ...
     #		del L[4::2]      OK  removes every 2nd element from index 4, but
     #		L[4::2] = ()     fails to do the same thing.
-    # of which we keep a list
+    # WORSE STILL - we need to change the slice object when it changes size
+    #   e.g.   L[10:12] = [0,1,2,3] is reversed by L[10:14] = [x,y]
+    # TODO: - extend slice assignment to allow unequally size extended slices
+    ## TODO: - add a different set of modifications, permutations - maybe not
+    # Once we have big changes, flag that undoing will be via whole-slice assignment,
+    #  in which case no further updating needed. NOTE: this flag attaches to current
+    #  history object, NOT the historic object, otherwse it would need to be reset
+    #  at every posit()
     newHist = list
     def undo( I , L ):
 	for ( slc , nval , oval ) in L[ ::-1 ]:
@@ -101,6 +109,7 @@ class histList( list , histObject ):
 	I.pa = pa or I
 	I.history = ( pa and pa.history ) or [ { } ]
 	list.__init__( I , *args )
+	I.exp = None  # set to I[ : ] when undoing by single explicit assignment
 
 
     def change( I , slc , nval , force = False ):
@@ -115,12 +124,22 @@ class histList( list , histObject ):
     def _fwrap( I , f , *args ):
 	# general wrapper for functions with big or unknown effects, which we
 	#  just record as changes to whole-list slice with before & after values
+	# Since this should replace entire history, 
 	slc = slice( None ) # whole-of-list slice
 	oval = I[ s ]
 	ret = f( I , *args )
 	nval = I[ s ]
 	I.hist( ).append( ( slc , nval , oval ) )
 	return ret
+    #def _fwrap( I , f , *args ):
+	## general wrapper for functions with big or unknown effects, which we
+	##  just record as changes to whole-list slice with before & after values
+	#slc = slice( None ) # whole-of-list slice
+	#oval = I[ s ]
+	#ret = f( I , *args )
+	#nval = I[ s ]
+	#I.hist( ).append( ( slc , nval , oval ) )
+	#return ret
 
     def __setslice__( I , i , j , L ):	return I.change( slice( i , j ) , L )
     def __setitem__ ( I , i , x ):	return I.change( slice( i , i+1 ) , ( x , ) )
