@@ -10,6 +10,10 @@ from possibilities import *
 
 class SolutionFound( Exception ):
     pass
+class BranchesDone( Exception ):
+    pass
+
+BranchDone = ( SolutionFound , Contradiction , BranchesDone )
 
 class board:
     def __init__( I , n = 8 ):
@@ -38,6 +42,12 @@ class board:
 	acts = acts or I.history.pop( )
 	for obj in acts:
 	    obj.undo( acts[ obj ] )
+
+    def confirmSingles( I ):
+	# confirm any singletons left in I.lives
+	for i in I.lives:
+	    if len( I.queens[ i ] ) == 1:
+		I.confirm( i )
     def confirm( I , i , j = -1 ):
 	# Rule "in" queen i in position j, ruling out conflicts and taking off 'lives' list
 	if len( I.lives ) == 1:  # and i in I.lives:
@@ -53,7 +63,7 @@ class board:
 	    print ">%sconfirming queen %d at %d..." % ( I.indent( ) , i , j ) ,
 	    # Rule out horizontal and two diagonals for each other queen
 	    #  Look out for new singletons (forced choices) in process
-	    newSingles = [ ]
+	    #newSingles = [ ]
 	    I.lives.discard( i )
 	    for i1 in I.lives:
 		print i1,
@@ -61,14 +71,15 @@ class board:
 		q = I.queens[ i1 ]
 		#ol = len( q )
 		q.difference_update( ( j , j + d , j - d ) )
-		if len( q ) == 1:  # and ol > 1:
-		    print '!' ,
-		    newSingles.append( i1 )
+		#if len( q ) == 1:  # and ol > 1:
+		    #print '!' ,
+		    #newSingles.append( i1 )
 	    print
-	    if newSingles:
-		i1 = newSingles[ 0 ]
-		#print ">%sforced queen %d" % ( I.indent( ) , i1 )
-		I.confirm( i1 )
+	    #if newSingles:
+		#i1 = newSingles[ 0 ]
+		##print ">%sforced queen %d" % ( I.indent( ) , i1 )
+		#I.confirm( i1 )
+	    I.confirmSingles( )
 	    
     def posit( I , i , j ):
 	# try putting queen i in position j
@@ -78,36 +89,34 @@ class board:
 	kbdPrompt( )
 	print "]%sTrying queen %d at %d" % ( I.indent( ) , i , j ) ,
 	I.history.append( { } )
-	try:
-	    I.queens[ i ].fix( j )
-	    # and then start assigning (restricting) things...
-	    # confirm enforces restrictions on other queens,
-	    # recursively (if others forced to last option)
-	    # but still without further positing
-	    I.confirm( i , j )
-	    # If no contradiction reached by confirm, then
-	    # it's time to do more positing.
-	    # This is the recursibe bit!
-	    # Explore actually takes live choice and posits
-	    # a choice for one of them
-	    I.explore( )
-	except ( Contradiction , SolutionFound ) as contr:
-	    print "\n%d:%d done : %s" % ( i , j , contr )
-	    # Exhausted branch - undo changes back to this posit
-	    I.backup()
-	    # and THEN eliminate possibility that was tried
-	    q = I.queens[ i ]
-	    q.remove( j )
-	    if len( q ) == 1:
-		I.confirm( i )
+	I.queens[ i ].fix( j )
+	# confirm enforces restrictions on other queens,
+	# recursively (if others forced to last option)
+	# but still without further positing
+	I.confirm( i , j )
+	# If no contradiction reached by confirm, then
+	# it's time to do more positing.
+	# This is the recursibe bit!
+	I.explore( )
 	
     def explore( I ):
-	while len( I.lives ) > 1:
-	    livs = I.sortedLives( )
-	    print I
-	    print livs
-	    ( l , i , js ) = livs[ 0 ]
-	    I.posit( i , js[ 0 ] )
+	livs = I.sortedLives( )
+	print I
+	print livs
+	( l , i , js ) = livs[ 0 ]
+	for j in js:
+	    try:
+		I.posit( i , j )
+	    except ( BranchDone ) as contr:
+		print "\n%s<%d:%d done : %s" % ( I.indent( ) , i , j , contr )
+		# Exhausted branch - undo changes back to this posit
+		I.backup()
+	# Having tried all the possibilities, raise BranchesDone
+	# unless we are at outer level
+	if len( I.history ) > 1:
+	    #print len( I.history )
+	    raise BranchesDone( )
+	
 
 waitKbd = 1
 waitKbdCount = 0
@@ -132,10 +141,10 @@ def test1():
     print "Hit enter to procede with each step,"
     print "or a number n to switch to n-steps-at-a-time,"
     print "or 0 for no more prompting"
-    try:
-	b.explore()
-    except ( Contradiction , SolutionFound ) as contr:
-	print "\nAll done : %s" % contr
+    #try:
+    b.explore()
+    #except ( Contradiction , SolutionFound ) as contr:
+    #print "\nAll done : %s" % contr
     print b.solutions
 
 test1()
