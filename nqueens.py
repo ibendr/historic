@@ -7,7 +7,7 @@ We'll use n Queens as a simple test problem.
 """
 
 from possibilities import *
-from tryposit import *
+from tryposit2 import *
 
 class SolutionFound( Exception ):
     pass
@@ -23,15 +23,19 @@ class board( problem ):
 	I.n = n
 	rng = range( n )
 	return [ possSet ( hist , rng ) for i in rng ]
-    def makeRelations( I ):
-	rels = { }
-	for j in I.keys:
-	    for i in range( j ):
-		b = j - i
-		rels[ (i,j) ] = \
-		   ( lambda J : not ( J.val( j ) - J.val( i ) ) in ( -b , 0 , b ) , \
-		     "%d-%d" % ( i , j ) )
-	return rels
+    
+    #def makeChecks( I ):
+	#rels = { }
+	#for j in I.keys:
+	    #for i in range( j ):
+		#b = j - i
+		#rels[ (i,j) ] = \
+		   #( lambda J : not ( J.val( j ) - J.val( i ) ) in ( -b , 0 , b ) , \
+		     #"%d-%d" % ( i , j ) )
+	#I.checks[:] = rels
+    def clashes( I , i1 , v1 , i2 ):
+	# return values v2 of I[ i2 ] incompatible with I[ i1 ] == v1
+	return ( v1 , v1 + i1 - i2 , v1 - i1 + i2 )
     def __str__( I ):
 	return '\n'.join( [ ''.join( [ ( '-','O' )[ j in I.cells[ i ] ] \
 			for i in I.keys ] ) for j in I.keys[ :: -1 ] ] )
