@@ -8,9 +8,6 @@ We'll use n Queens as a simple test problem.
 
 from possibilities import *
 
-waitKbd = 1
-waitKbdCount = 0
-
 class SolutionFound( Exception ):
     pass
 
@@ -21,20 +18,13 @@ class board:
 	I.history = [ { } ]
 	I.queens = [ possSet ( I.history , rng ) for i in rng ]
 	I.solutions = [ ]
-	# lives list is ( l , i ) l = number of possibilities, i = queen number (NOT queen)
-	# new approach - just set of indices of not yet posited / fixed-and-confirmed
+	# set of indices of not yet posited / fixed-and-confirmed
 	I.lives = possSet( I.history , rng )
     def sortedLives( I ):
 	ret = [ ( len( I.queens[ i ] ) , i , list( I.queens[ i ] ) ) for i in I.lives ]
 	ret.sort( )
-	#ret.sort( None , lambda i : len( I.queens[ i ] )
 	return ret
-    #def update_lives( I ):
-	#I.lives.sort( None , lambda i : len( I.queens[ i ] )
-	## re-order lives list by current len()s, NOT eliminating leading singletons
-	## but eliminate i1 if it is specified
-	#I.lives = [ ( len( I.queens[ i ] ) , i ) for ( l , i ) in I.lives if i!= i1 ]
-	#I.lives.sort( )
+
     def __len__( I ):
 	return reduce( int.__mul__ , [ len( s ) for s in I.queens ] )
     def __str__( I ):
@@ -85,24 +75,21 @@ class board:
 	# start a new 'chapter' in our history
 	if not j in I.queens[ i ]:
 	    raise KeyError
+	kbdPrompt( )
 	print "]%sTrying queen %d at %d" % ( I.indent( ) , i , j ) ,
-	global waitKbd , waitKbdCount
-	if waitKbd:
-	    waitKbdCount += 1
-	    if ( waitKbdCount % waitKbd ) == 0:
-		inp = raw_input( )
-		if inp:
-		    n = 0
-		    while inp and inp[ 0 ].isdigit( ):
-			n = 10 * n + int( inp[ 0 ] )
-			inp = inp[ 1: ]
-		    waitKbd = n
 	I.history.append( { } )
 	try:
-	    I.queens[ i ].intersection_update( ( j , ) )
-	    # and then start assigning (restricting) things
+	    I.queens[ i ].fix( j )
+	    # and then start assigning (restricting) things...
+	    # confirm enforces restrictions on other queens,
+	    # recursively (if others forced to last option)
+	    # but still without further positing
 	    I.confirm( i , j )
-	    # For recursion to work, continuation has to be here...
+	    # If no contradiction reached by confirm, then
+	    # it's time to do more positing.
+	    # This is the recursibe bit!
+	    # Explore actually takes live choice and posits
+	    # a choice for one of them
 	    I.explore( )
 	except ( Contradiction , SolutionFound ) as contr:
 	    print "\n%d:%d done : %s" % ( i , j , contr )
@@ -122,7 +109,24 @@ class board:
 	    ( l , i , js ) = livs[ 0 ]
 	    I.posit( i , js[ 0 ] )
 
-b = board(8)
+waitKbd = 1
+waitKbdCount = 0
+
+def kbdPrompt( ):
+    global waitKbd , waitKbdCount
+    if waitKbd:
+	waitKbdCount += 1
+	if ( waitKbdCount % waitKbd ) == 0:
+	    inp = raw_input( )
+	    if inp:
+		n = 0
+		while inp and inp[ 0 ].isdigit( ):
+		    n = 10 * n + int( inp[ 0 ] )
+		    inp = inp[ 1: ]
+		waitKbd = n
+    
+    
+b = board(6)
 #test
 def test1():
     print "Hit enter to procede with each step,"
@@ -133,19 +137,5 @@ def test1():
     except ( Contradiction , SolutionFound ) as contr:
 	print "\nAll done : %s" % contr
     print b.solutions
-
-def inner( x ):
-    print x , 1 / x
-    try:
-	inner( x - 1 )
-    except ZeroDivisionError:
-	print 'failed at %d' %x
-	if x < 5:
-	    raise ZeroDivisionError
-
-	
-	
-def test2():
-    inner( 10 )
 
 test1()

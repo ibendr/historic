@@ -99,6 +99,13 @@ class possSet( set ):
 	# counld skip conditional - but nice for debugginh to raise a different contradiction
 	#  exception - one that probably shouldn't occur
 	if x in I:
-	    I.__iand__( set( ( x, ) ) )
+	    if len( I ) > 1:
+		# Is this any quicker? No new set generated, but more instructions
+		h = I.hist( )
+		h.__ior__( I )
+		h.remove( x )
+		set.clear( I )
+		set.add( I , x )
+		#I.__isub__( set( I ) - set ( ( x, ) ) )
 	else:
 	    raise Contradiction( "attempt to fix to value not among possibilities" )
