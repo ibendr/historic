@@ -38,14 +38,17 @@ class SolutionFound( Exception ):
     pass
 class BranchesDone( Exception ):
     pass
+class QuitSearch( Exception ):
+    pass
 
-BranchDone = ( SolutionFound , Contradiction , BranchesDone )
+BranchDone = ( SolutionFound , Contradiction , BranchesDone , QuitSearch )
 
 class problem( dict ):
-    def __init__( I , *args ):
+    def __init__( I , *args , **kargs ):
 	# Setup empty history and solutions set
 	I.history = [ { } ]
 	I.solutions = [ ]
+	I.verbosity = kargs.get( "verbosity" , 1 )
 	# Delegate making cells and their relations to subclass operations
 	I.makeCells( *args )
 	# If using the relations framework (which can be by-passed),
@@ -88,7 +91,7 @@ class problem( dict ):
 	return ret
     def indent( I , c = '=' ):
 	# indent string to show depth of history
-	return len( I.history ) * "="
+	return len( I.history ) * c
     def backup( I ):
 	for ( obj , acts ) in I.history.pop( ).items( ):
 	    obj.undo( acts )
@@ -105,8 +108,8 @@ class problem( dict ):
 	if v == None:
 	    # lookup (only) possibility if not passed as arg
 	    v = I.val( i )
-	vprint ( ">%sconfirming cell %s : %s..." % \
-	    ( I.indent( ) , i , v ) , 2 , True )
+	I.vprint ( "%sconfirming %s : %s..." % \
+	    ( I.indent( "'" ) , i , v ) , 2 , True )
 	fixed = I.keySet - I.lives # easier than actively maintaining(?)
 	fixed.add( i )
 	# Do checks with existing cells
@@ -114,7 +117,7 @@ class problem( dict ):
 	    # For each relation involving this cell...
 	    for ( js , ( rel , rnam ) ) in I.cellChecks[ i ]:
 		# if all cells involved now fixed
-		vprint ( rnam , 2 , True )
+		I.vprint ( rnam , 2 , True )
 		if js <= fixed:
 		    # then check for contradiction
 		    if not rel( I ):
@@ -122,15 +125,17 @@ class problem( dict ):
 	# Now if no more lives, we are done
 	if len( I.lives ) == 1:
 	    I.solutions.append( I.vals( ) )
-	    vprint( "\n====SOLUTION=====" , 0 )
-	    vprint( I , 0 )
+	    I.vprint( "\n====SOLUTION=====" , 0 )
+	    I.vprint( I , 0 )
 	    raise SolutionFound
 	I.lives.discard( i ) # we had to wait, 'cos emptying it raises alarm
 	# Knockout clashes in live cells, recursively confirming new singletons
 	for i2 in I.lives:
-	    vprint( i2, 2 , True )
+	    I.vprint( i2, 2 , True )
 	    I[ i2 ].difference_update( I.clashes( i , v , i2 ) )
-	vprint( '' , 2 )
+	    if len( I[ i2 ] ) == 1:
+		I.vprint( '!' , 2 , True )
+	I.vprint( '' , 2 )
 	I.confirmSingles( )
 	
     def posit( I , i , v ):
@@ -138,32 +143,48 @@ class problem( dict ):
 	# start a new 'chapter' in our history
 	if not v in I[ i ]:
 	    raise KeyError
+	I.vprint ( "%s > %s : %s" % ( I.indent( '-' ) , i , v ) )
 	kbdPrompt( )
-	vprint ( "]%sTrying cell %s : %s" % ( I.indent( ) , i , v ) )
-	I.history.append( { } )
+	#I.history.append( { } )
 	I[ i ].fix( v )
 	I.confirm( i , v )
 	I.explore( )
 	
     def explore( I ):
 	livs = I.sortedLives( )
-	vprint( '' , 3 )
-	vprint( I , 3 )
-	vprint ( livs , 4 )
+	I.vprint( '' , 3 )
+	I.vprint( I , 3 )
+	I.vprint ( livs , 4 )
 	( l , i , vs ) = livs[ 0 ]
 	for v in vs:
 	    try:
+		I.history.append( { } )
 		I.posit( i , v )
+	    except ( QuitSearch , KeyboardInterrupt ):
+		# Since quitting involves
+		I.backup( )
+		I.vprint( I , 1 )
+		I.vprint ( livs , 1 )
+		if len( I.history ) > 1:
+		    raise
+		break
 	    except ( BranchDone ) as contr:
-		vprint ( "\n%s<%s:%s done : %s" % ( I.indent( ) , i , v , contr ) )
-		# Exhausted branch - undo changes back to this posit
 		I.backup()
+		I.vprint ( "%s < %s : %s  <  %s" % ( I.indent( ) , i , v , contr ) )
+		# Exhausted branch - undo changes back to this posit
 	# Having tried all the possibilities, raise BranchesDone
 	# unless we are at outer level
 	if len( I.history ) > 1:
 	    #print len( I.history )
 	    raise BranchesDone( )
 	
+    def vprint( I , s , verb = 1 , inline = False ):
+	if I.verbosity > verb:
+	    if inline:
+		print s ,
+	    else:
+		print s
+
 
 waitKbd = 1
 waitKbdCount = 0
@@ -175,6 +196,9 @@ def kbdPrompt( ):
 	if ( waitKbdCount % waitKbd ) == 0:
 	    inp = raw_input( )
 	    if inp:
+		#if inp=="q":
+		if inp in "xq":
+		    raise QuitSearch( inp )
 		n = 0
 		while inp and inp[ 0 ].isdigit( ):
 		    n = 10 * n + int( inp[ 0 ] )
@@ -183,13 +207,4 @@ def kbdPrompt( ):
 
 print "Hit enter to procede with each step,"
 print "or a number n to switch to n-steps-at-a-time,"
-print "or 0 for no more prompting"
-
-verbosity = 1
-def vprint( s , verb = 1 , inline = False ):
-    if verbosity > verb:
-	if inline:
-	    print s ,
-	else:
-	    print s
-
+print "or 0 for no more prompting, x to exit search, q to quit"

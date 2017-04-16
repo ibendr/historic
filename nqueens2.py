@@ -1,22 +1,9 @@
 """
-A little experiment in using try-except for positing
-possibilities in a problem-solving search.
-Will it behave - having recursive calls nesting the try's?
-
-We'll use n Queens as a simple test problem.
+n Queens problem, implemented using the tryposit2 framework
 """
 
 #from possibilities import *
 from tryposit2 import *
-
-class SolutionFound( Exception ):
-    pass
-class BranchesDone( Exception ):
-    pass
-
-BranchDone = ( SolutionFound , Contradiction , BranchesDone )
-
-#class cell( possSet ):
 
 class board( problem ):
     def makeCells( I , n = 8 ):
@@ -31,12 +18,11 @@ class board( problem ):
 	return '\n'.join( [ ''.join( [ ( '-','O' )[ j in I[ i ] ] \
 			for i in I.rng ] ) for j in I.rng[ :: -1 ] ] )
 			#   + [ I.n * '=' ] )
-verbosity = 1	
 #test
 def test1():
     global b
-    b = board(12)
-    b.explore()
+    b = board( 12 , verbosity = 2 )
+    b.explore( )
     #except ( Contradiction , SolutionFound ) as contr:
     #print "\nAll done : %s" % contr
     print b.solutions
