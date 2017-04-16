@@ -49,6 +49,9 @@ class problem( dict ):
 	I.history = [ { } ]
 	I.solutions = [ ]
 	I.verbosity = kargs.get( "verbosity" , 1 )
+	# For express mode, set verbosity to -1:
+	if I.verbosity == -1:
+	    I.kbdPrompt = I.vprint = lambda *arg: None
 	# Delegate making cells and their relations to subclass operations
 	I.makeCells( *args )
 	# If using the relations framework (which can be by-passed),
@@ -61,10 +64,10 @@ class problem( dict ):
 	I.listChecks( )
 	# lives is set of indeces of cells which haven't been "confirmed"
 	I.lives = possSet( I.history , I.keys( ) )
+    waitKbd = 1
+    waitKbdCount = 0
     # makeCells MUST be provided by subclass
-    # But either of makeClashes or makeChecks may default to making none
-    #def makeClashes( I , *args ):
-	#I.clashes = [ ]
+    # But either of clashes or makeChecks may default to none -
     def clashes( I , i1 , v1 , i2 ):
 	# return values v2 of I[ i2 ] incompatible with I[ i1 ] == v1
 	return ( )
@@ -144,7 +147,7 @@ class problem( dict ):
 	if not v in I[ i ]:
 	    raise KeyError
 	I.vprint ( "%s > %s : %s" % ( I.indent( '-' ) , i , v ) )
-	kbdPrompt( )
+	I.kbdPrompt( )
 	#I.history.append( { } )
 	I[ i ].fix( v )
 	I.confirm( i , v )
@@ -184,26 +187,20 @@ class problem( dict ):
 		print s ,
 	    else:
 		print s
-
-
-waitKbd = 1
-waitKbdCount = 0
-
-def kbdPrompt( ):
-    global waitKbd , waitKbdCount
-    if waitKbd:
-	waitKbdCount += 1
-	if ( waitKbdCount % waitKbd ) == 0:
-	    inp = raw_input( )
-	    if inp:
-		#if inp=="q":
-		if inp in "xq":
-		    raise QuitSearch( inp )
-		n = 0
-		while inp and inp[ 0 ].isdigit( ):
-		    n = 10 * n + int( inp[ 0 ] )
-		    inp = inp[ 1: ]
-		waitKbd = n
+    def kbdPrompt( I ):
+	if I.waitKbd:
+	    I.waitKbdCount += 1
+	    if ( I.waitKbdCount % I.waitKbd ) == 0:
+		inp = raw_input( )
+		if inp:
+		    #if inp=="q":
+		    if inp in "xq":
+			raise QuitSearch( inp )
+		    n = 0
+		    while inp and inp[ 0 ].isdigit( ):
+			n = 10 * n + int( inp[ 0 ] )
+			inp = inp[ 1: ]
+		    I.waitKbd = n
 
 print "Hit enter to procede with each step,"
 print "or a number n to switch to n-steps-at-a-time,"
