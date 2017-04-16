@@ -43,6 +43,16 @@ class QuitSearch( Exception ):
 
 BranchDone = ( SolutionFound , Contradiction , BranchesDone , QuitSearch )
 
+def lint( s ):
+    # extract integer from start of string
+    v = 0
+    for c in s:
+	if not c.isdigit( ):
+	    break
+	v = v*10 + ( ord( c ) - 48 )
+    return v
+
+  
 class problem( dict ):
     def __init__( I , *args , **kargs ):
 	# Setup empty history and solutions set
@@ -200,11 +210,7 @@ class problem( dict ):
 		    #if inp=="q":
 		    if inp in "xq":
 			raise QuitSearch( inp )
-		    n = 0
-		    while inp and inp[ 0 ].isdigit( ):
-			n = 10 * n + int( inp[ 0 ] )
-			inp = inp[ 1: ]
-		    I.waitKbd = n
+		    I.waitKbd = lint( inp )
 
 print "Hit enter to procede with each step,"
 print "or a number n to switch to n-steps-at-a-time,"

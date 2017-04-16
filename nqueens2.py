@@ -5,6 +5,7 @@ n Queens problem, implemented using the tryposit2 framework
 """
 
 from tryposit2 import *
+from offcuts import *
 
 zips = lambda x: zip(*x)
 def gridView( ps , h = None , w = None , r = False ):
@@ -37,8 +38,7 @@ def solsView( ss , ncols = None , buf = "   " , rr = False ):
     if rr:
 	return rows
     return '\n'.join( rows )
-	
-    
+
     
 class board( problem ):
     def makeCells( I , n = 8 ):
@@ -55,17 +55,30 @@ class board( problem ):
     __str__ = gridView
 
 #test
-def go( n=8 , v=-1 , k=0 , c=8 ):
+def go( n=8 , v=-1 , k=0 , c=8, p=0 ):
     print n,v,k
-    global b,s
+    global b,s,t , v1
     b = board( n , verbosity = v , kprompt = k )
     b.explore( )
     s = b.solutions
-    print "%d solutions..." % len( s )
-    print solsView( s , c )
+    if p:
+	print "%d solutions..." % len( s )
+	print solsView( s , c )
 
 if __name__ == "__main__":
     import sys
     go( *map( int , list( sys.argv[ 1 : ] ) ) )
 else:
-    go(  )
+    import random
+    go( 5 )
+    t = s[:]
+    go( 8 )
+    t += s[:8]
+    go( 10 )
+    t += s[:4]
+    random.shuffle( t )
+    print t
+    v1 = solsView( t )
+    print len( v1 )
+    print blockColumns( v1 )
+    #cs=toColumns( v1 )
