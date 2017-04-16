@@ -1,10 +1,29 @@
+#!/usr/bin/python
+
 """
 n Queens problem, implemented using the tryposit2 framework
 """
 
-#from possibilities import *
 from tryposit2 import *
 
+def gridView( ps , h = None , w = None ):
+    """ List of possibilities as printable board
+    (each possibility set is a column).
+    ps can be any dict or sequence with len( ) defined
+    and elements as any container with in and len
+    """
+    # width is number of entries
+    w = w or len( ps )
+    # assume square unless height specified
+    h = h or w
+    return '\n'.join( [ ''.join( \
+	    [ ":o-Q" [ ( j in ps[ i ] ) + 2 * ( len( ps[ i ] ) == 1 ) ] \
+	    for i in range( w ) ] )   for j in range( h )[ :: -1 ]  ] )
+def solView( s ):
+    return gridView( [ ( x,) for x in s ] )
+def solsView( s ):
+    return '\n\n'.join( map( solView , s ) )
+    
 class board( problem ):
     def makeCells( I , n = 8 ):
 	# set up the possibility sets
@@ -17,25 +36,23 @@ class board( problem ):
 	return ( v1 , v1 + i1 - i2 , v1 - i1 + i2 )
     def vals( I ):
 	return tuple( [ I.val( i ) for i in I.rng ] )
-    def __str__( I ):
-	return '\n'.join( [ ''.join( [ ( '-','O' )[ j in I[ i ] ] \
-			for i in I.rng ] ) for j in I.rng[ :: -1 ] ] )
-
-def gridView( ps , h = None , w = None ):
-    # Show list of possibilities as board (each possibility as column)
-    # width is number of entries
-    w = w or len( ps )
-    # assume square unless height specified
-    h = h or w
-    return '\n'.join( [ ''.join( \
-	    [ "-o:Q" [ j in p + 2 * ( len( p ) == 1 ) ] \
-	    for p in ps ] )   for j in range( h )[ :: -1 ]  ] )
+    __str__ = gridView
+    #def __str__( I ):
+	#return '\n'.join( [ ''.join( [ ( '-','O' )[ j in I[ i ] ] \
+			#for i in I.rng ] ) for j in I.rng[ :: -1 ] ] )
 
 #test
-def test1():
-    global b
-    b = board( 12 , verbosity = -1 )
+def test1( n=8 , v= -1 , k= 0):
+    print n,v,k
+    global b,s
+    b = board( n , verbosity = v , kprompt = k )
     b.explore( )
-    #print b.solutions
+    s = b.solutions
+    print "%d solutions..." % len( s )
+    print solsView( s )
 
-test1()
+if __name__ == "__main__":
+    import sys
+    test1( *map( int , list( sys.argv[ 1 : ] ) ) )
+else:
+    test1( 6 , -1 )

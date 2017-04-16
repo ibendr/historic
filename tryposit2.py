@@ -49,7 +49,8 @@ class problem( dict ):
 	I.history = [ { } ]
 	I.solutions = [ ]
 	I.verbosity = kargs.get( "verbosity" , 1 )
-	# For express mode, set verbosity to -1:
+	I.waitKbd = kargs.get( "kprompt" , 1 )
+	# Express mode (verbosity -1) - no prompt or print
 	if I.verbosity == -1:
 	    I.kbdPrompt = I.vprint = lambda *arg: None
 	# Delegate making cells and their relations to subclass operations
@@ -64,7 +65,6 @@ class problem( dict ):
 	I.listChecks( )
 	# lives is set of indeces of cells which haven't been "confirmed"
 	I.lives = possSet( I.history , I.keys( ) )
-    waitKbd = 1
     waitKbdCount = 0
     # makeCells MUST be provided by subclass
     # But either of clashes or makeChecks may default to none -
@@ -85,8 +85,12 @@ class problem( dict ):
 	return I[ i ].val( )
     def vals( I ):
 	return dict( [ ( i , I[ i ].val( ) ) for i in I.keys( ) ] )
-    def __len__( I ):
-	return reduce( int.__mul__ , [ len( I[ i ] ) for i in I.keys( ) ] )
+    # We did redefine __len__ to give total number of possibilities,
+    # (viewing the problem as a cartesian product of possibility sets).
+    # However, now that we are subclassing dict, we should be able to use
+    # the len( ) function to read the number of cells in I as expected
+    #def __len__( I ):
+	#return reduce( int.__mul__ , [ len( I[ i ] ) for i in I.keys( ) ] )
 
     def sortedLives( I ):
 	ret = [ ( len( I[ i ] ) , i , list( I[ i ] ) ) for i in I.lives ]
@@ -94,7 +98,7 @@ class problem( dict ):
 	return ret
     def indent( I , c = '=' ):
 	# indent string to show depth of history
-	return len( I.history ) * c
+	return len( I ) * ' ' + len( I.history ) * c
     def backup( I ):
 	for ( obj , acts ) in I.history.pop( ).items( ):
 	    obj.undo( acts )
@@ -155,7 +159,7 @@ class problem( dict ):
 	
     def explore( I ):
 	livs = I.sortedLives( )
-	I.vprint( '' , 3 )
+	#I.vprint( '' , 3 )
 	I.vprint( I , 3 )
 	I.vprint ( livs , 4 )
 	( l , i , vs ) = livs[ 0 ]
