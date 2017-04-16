@@ -6,8 +6,9 @@ n Queens problem, implemented using the tryposit2 framework
 
 from tryposit2 import *
 
-def gridView( ps , h = None , w = None ):
-    """ List of possibilities as printable board
+zips = lambda x: zip(*x)
+def gridView( ps , h = None , w = None , r = False ):
+    """Display possibilities as printable board
     (each possibility set is a column).
     ps can be any dict or sequence with len( ) defined
     and elements as any container with in and len
@@ -16,13 +17,28 @@ def gridView( ps , h = None , w = None ):
     w = w or len( ps )
     # assume square unless height specified
     h = h or w
-    return '\n'.join( [ ''.join( \
+    rows = [ ''.join( \
 	    [ ":o-Q" [ ( j in ps[ i ] ) + 2 * ( len( ps[ i ] ) == 1 ) ] \
-	    for i in range( w ) ] )   for j in range( h )[ :: -1 ]  ] )
-def solView( s ):
-    return gridView( [ ( x,) for x in s ] )
-def solsView( s ):
-    return '\n\n'.join( map( solView , s ) )
+	    for i in range( w ) ] )   for j in range( h )[ :: -1 ]  ]
+    if r:
+	return rows
+    return '\n'.join( rows )
+def solView( s , r = False ):
+    return gridView( [ ( x,) for x in s ] , None , None , r )
+def solsView( ss , ncols = None , buf = "   " , rr = False ):
+    sVs = [ solView ( s , ncols ) for s in ss ]
+    if not ncols:
+	return '\n\n'.join( sVs )
+    nrows = ( len( ss ) - 1 ) / ncols + 1
+    rowsss = [ sVs[ i :: nrows ] for i in range( nrows ) ]
+    sVs2 = map( zips , rowsss )
+    rowss = [ [ buf.join( rws ) for rws in rwss ] for rwss in sVs2 ]
+    rows = reduce( lambda r1, r2: r1 + [''] + r2 , rowss )
+    if rr:
+	return rows
+    return '\n'.join( rows )
+	
+    
     
 class board( problem ):
     def makeCells( I , n = 8 ):
@@ -37,22 +53,19 @@ class board( problem ):
     def vals( I ):
 	return tuple( [ I.val( i ) for i in I.rng ] )
     __str__ = gridView
-    #def __str__( I ):
-	#return '\n'.join( [ ''.join( [ ( '-','O' )[ j in I[ i ] ] \
-			#for i in I.rng ] ) for j in I.rng[ :: -1 ] ] )
 
 #test
-def test1( n=8 , v= -1 , k= 0):
+def go( n=8 , v=-1 , k=0 , c=8 ):
     print n,v,k
     global b,s
     b = board( n , verbosity = v , kprompt = k )
     b.explore( )
     s = b.solutions
     print "%d solutions..." % len( s )
-    print solsView( s )
+    print solsView( s , c )
 
 if __name__ == "__main__":
     import sys
-    test1( *map( int , list( sys.argv[ 1 : ] ) ) )
+    go( *map( int , list( sys.argv[ 1 : ] ) ) )
 else:
-    test1( 6 , -1 )
+    go(  )
