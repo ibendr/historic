@@ -5,9 +5,16 @@ n Queens problem, implemented using the tryposit2 framework
 """
 
 from tryposit2 import *
-from offcuts import *
+#from offcuts import *
 
 zips = lambda x: zip(*x)
+def solToPos( s ):
+    return [ ( x,) for x in s ]
+def rowView( ps , j ):
+    w = len( ps )
+    return ''.join( [ ":o-Q" [ \
+	    ( j in ps[ i ] ) + 2 * ( len( ps[ i ] ) == 1 ) ] \
+		for i in range( w ) ] )
 def gridView( ps , h = None , w = None , r = False ):
     """Display possibilities as printable board
     (each possibility set is a column).
@@ -18,27 +25,21 @@ def gridView( ps , h = None , w = None , r = False ):
     w = w or len( ps )
     # assume square unless height specified
     h = h or w
-    rows = [ ''.join( \
-	    [ ":o-Q" [ ( j in ps[ i ] ) + 2 * ( len( ps[ i ] ) == 1 ) ] \
-	    for i in range( w ) ] )   for j in range( h )[ :: -1 ]  ]
-    if r:
-	return rows
-    return '\n'.join( rows )
+    rows = [ rowView( ps , j )  for j in range( h )[ :: -1 ]  ]
+    return ( r and rows ) or '\n'.join( rows )
 def solView( s , r = False ):
-    return gridView( [ ( x,) for x in s ] , None , None , r )
+    return gridView( solToPos( s ) , None , None , r )
 def solsView( ss , ncols = None , buf = "   " , rr = False ):
-    sVs = [ solView ( s , ncols ) for s in ss ]
     if not ncols:
-	return '\n\n'.join( sVs )
+	return '\n\n'.join( map( solView , ss ) )
+    h = len( ss[ 0 ] )
+    pss = map( solToPos , ss )
     nrows = ( len( ss ) - 1 ) / ncols + 1
-    rowsss = [ sVs[ i :: nrows ] for i in range( nrows ) ]
-    sVs2 = map( zips , rowsss )
-    rowss = [ [ buf.join( rws ) for rws in rwss ] for rwss in sVs2 ]
-    rows = reduce( lambda r1, r2: r1 + [''] + r2 , rowss )
-    if rr:
-	return rows
-    return '\n'.join( rows )
-
+    rows = [ buf.join( [ ( j and rowView( ps , j-1 ) ) or '' \
+		for ps in pss[ i :: nrows ] ] ) \
+	    for i in range( nrows ) \
+	    for j in range( h , -1 , -1 ) ]
+    return ( rr and rows ) or '\n'.join( rows )
     
 class board( problem ):
     def makeCells( I , n = 8 ):
@@ -55,7 +56,7 @@ class board( problem ):
     __str__ = gridView
 
 #test
-def go( n=8 , v=-1 , k=0 , c=8, p=0 ):
+def go( n=8 , v=-1 , k=0 , c=8, p=1 ):
     print n,v,k
     global b,s,t , v1
     b = board( n , verbosity = v , kprompt = k )
@@ -71,14 +72,14 @@ if __name__ == "__main__":
 else:
     import random
     go( 5 )
-    t = s[:]
-    go( 8 )
-    t += s[:8]
-    go( 10 )
-    t += s[:4]
-    random.shuffle( t )
-    print t
-    v1 = solsView( t )
-    print len( v1 )
-    print blockColumns( v1 )
+    #t = s[:]
+    #go( 8 )
+    #t += s[:8]
+    #go( 10 )
+    #t += s[:4]
+    #random.shuffle( t )
+    #print t
+    #v1 = solsView( t )
+    #print len( v1 )
+    #print blockColumns( v1 )
     #cs=toColumns( v1 )
