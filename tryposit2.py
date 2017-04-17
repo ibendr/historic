@@ -54,12 +54,17 @@ def lint( s ):
 
   
 class problem( dict ):
+    verbosity = -1
+    waitKbd = 1
+    waitKbdCount = 0
     def __init__( I , *args , **kargs ):
 	# Setup empty history and solutions set
 	I.history = [ { } ]
 	I.solutions = [ ]
-	I.verbosity = kargs.get( "verbosity" , 1 )
-	I.waitKbd = kargs.get( "kprompt" , 1 )
+	for key in kargs:
+	    I.__setattr__( key , kargs[ key ] )
+	#I.verbosity = kargs.get( "verbosity" , 1 )
+	#I.waitKbd = kargs.get( "kprompt" , 1 )
 	# Express mode (verbosity -1) - no prompt or print
 	if I.verbosity == -1:
 	    I.kbdPrompt = I.vprint = lambda *arg: None
@@ -75,7 +80,6 @@ class problem( dict ):
 	I.listChecks( )
 	# lives is set of indeces of cells which haven't been "confirmed"
 	I.lives = possSet( I.history , I.keys( ) )
-    waitKbdCount = 0
     # makeCells MUST be provided by subclass
     # But either of clashes or makeChecks may default to none -
     def clashes( I , i1 , v1 , i2 ):
@@ -211,7 +215,9 @@ class problem( dict ):
 		    if inp in "xq":
 			raise QuitSearch( inp )
 		    I.waitKbd = lint( inp )
-
-print "Hit enter to procede with each step,"
-print "or a number n to switch to n-steps-at-a-time,"
-print "or 0 for no more prompting, x to exit search, q to quit"
+instruction = \
+    """
+    Hit enter to procede with each step,
+    or a number n to switch to n-steps-at-a-time,
+    or 0 for no more prompting, x to exit search, q to quit
+    """

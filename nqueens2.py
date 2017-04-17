@@ -59,7 +59,7 @@ class board( problem ):
 def go( n=8 , v=-1 , k=0 , c=8, p=1 ):
     print n,v,k
     global b,s,t , v1
-    b = board( n , verbosity = v , kprompt = k )
+    b = board( n , verbosity = v , waitKbd = k )
     b.explore( )
     s = b.solutions
     if p:

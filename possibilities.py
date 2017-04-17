@@ -95,6 +95,13 @@ class possSet( set ):
 	# shorthand to fetch value when only one remains,
 	# but can also fetch an arbitrary element
 	return tuple( I )[ 0 ]
+    def live( I , x ):
+	return ( len( I ) > 1 )
+    def fixed( I , x ):
+	return ( len( I ) == 1 )
+    def valIf( I , ret = None ):
+	# value if it is fixed, otherwise None (or ret)
+	return ( ( len( I ) == 1 ) and tuple( I )[ 0 ] ) or ret
     def fix( I , x ):
 	# counld skip conditional - but nice for debugginh to raise a different contradiction
 	#  exception - one that probably shouldn't occur
@@ -108,4 +115,5 @@ class possSet( set ):
 		set.add( I , x )
 		#I.__isub__( set( I ) - set ( ( x, ) ) )
 	else:
-	    raise IndexError( "Attempt to fix to value not among possibilities" )
+	    # Did have IndexError, but this is more appropriate
+	    raise Contradiction( "Tried impossibile value: %s" % x )
