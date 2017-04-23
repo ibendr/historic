@@ -33,6 +33,7 @@ We'll use n Queens as a simple test problem.
 
 
 from possibilities import *
+from offcuts import lint
 
 class SolutionFound( Exception ):
     pass
@@ -43,16 +44,6 @@ class QuitSearch( Exception ):
 
 BranchDone = ( SolutionFound , Contradiction , BranchesDone , QuitSearch )
 
-def lint( s ):
-    # extract integer from start of string
-    v = 0
-    for c in s:
-	if not c.isdigit( ):
-	    break
-	v = v*10 + ( ord( c ) - 48 )
-    return v
-
-  
 class problem( dict ):
     verbosity = -1
     waitKbd = 1

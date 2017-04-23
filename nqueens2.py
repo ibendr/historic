@@ -2,6 +2,18 @@
 
 """
 n Queens problem, implemented using the tryposit2 framework
+
+If results to be believed then for n=12  (in ~11 seconds)...
+
+total solutions = 14200
+
+with 2-way rot sym: 80 (   20 'normal' )
+with 4-way rot sym:  8 (    4 'normal' )
+with no rot sym: 14112 ( 1764 'normal' )
+----------------------------------------
+		       ( 1788 'normal' )
+
+
 """
 
 from tryposit2 import *
